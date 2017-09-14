@@ -33,7 +33,7 @@ get_widget <- function (comparison_item, category, gprop) {
   token_payload$category <- category
   token_payload$property <- gprop
   url <- URLencode(paste0("https://www.google.com/trends/api/explore?property=&req=", 
-                          jsonlite::toJSON(token_payload, auto_unbox = TRUE), "&tz=300&hl=en-US"))
+                          jsonlite::toJSON(token_payload, auto_unbox = TRUE), "&tz=0&hl=en-US"))
   widget <- curl::curl_fetch_memory(url)
   stopifnot(widget$status_code == 200)
   myjs <- jsonlite::fromJSON(substring(rawToChar(widget$content), 
@@ -51,7 +51,7 @@ interest_over_time <- function (widget, comparison_item) {
   payload2$requestOptions$property <- widget$request$requestOptions$property[1]
   url <- paste0("https://www.google.fr/trends/api/widgetdata/multiline/csv?req=", 
                 jsonlite::toJSON(payload2, auto_unbox = T), "&token=", 
-                widget$token[1], "&tz=360")
+                widget$token[1], "&tz=0")
   res <- curl::curl_fetch_memory(URLencode(url))
   stopifnot(res$status_code == 200)
   con <- textConnection(rawToChar(res$content))
@@ -148,4 +148,34 @@ interest <- function (keyword, geo = "", time = "today+5-y", gprop = c("web",
   # return(res)
 }
 
-interest(keyword = "dog", geo = "US", time = "2017-09-08T09 2017-09-08T13", gprop = c("web", "news", "images", "froogle", "youtube"), category = 0, hl = "en-US")
+interest(keyword = "dog", geo = "US", time = "2017-09-08T0 2017-09-08T4", gprop = c("web", "news", "images", "froogle", "youtube"), category = 0, hl = "en-US")
+
+
+start_date = strptime(
+  '2017-08-12 00:00:00',
+  format = "%Y-%m-%d %H:%M:%S", tz = 'GMT')
+end_date = strptime(
+  '2017-08-13 00:00:00',
+  format = "%Y-%m-%d %H:%M:%S", tz = 'GMT')
+timeStamp = seq(start_date, end_date, by = '4 hour')
+
+timeSeq = paste(as.Date(timeStamp, tz= attributes(timeStamp)$tzone), lubridate::hour(timeStamp), sep='T')
+timePair1 = timeSeq[-1]
+timePair2 = timeSeq[-length(timeSeq)]
+timePair = paste(timePair2, timePair1)
+
+tmpL <- lapply(timePair, function(x) interest(keyword = "zillow", geo = "US", time = x, gprop = c("web", "news", "images", "froogle", "youtube"), category = 0, hl = "en-US"))
+tmpdf <- do.call(rbind, tmpL)
+tmpdf[duplicated(tmpdf$date), ]
+head(tmpdf)
+View(tmpdf)
+
+tmpdf$date = as.character(tmpdf$date)
+tmpdf2 = data.frame(date = as.character(seq(start_date, end_date, by = 'min')))
+
+merge  = tmpdf %>% left_join(tmpdf2, by = 'date')
+merge[!complete.cases(merge), ]
+
+length(unique(tmpdf$date))
+which(table(tmpdf$date)!=1
+      )
