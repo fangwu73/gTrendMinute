@@ -1,3 +1,6 @@
+
+# Get widget --------------------------------------------------------------
+
 get_widget = 
   #
   # Function to retreive url with curl and save in memory
@@ -27,6 +30,9 @@ get_widget =
     # return widget
     widget <- myjs$widgets
   }
+
+
+# Data over time ----------------------------------------------------------
 
 interest_over_time =
   #
@@ -97,6 +103,32 @@ interest_over_time =
   
 }
 
+# Check data interval -----------------------------------------------------
+
+checkTimeinterval =
+  #
+  # Function to find time interval✌️
+  #
+  function(time = "2017-01-01T00 2017-01-02T00") {
+    keyword = 'wut'
+    geo = 'US'
+    gprop = 'web'
+    category = 0
+    hl = "en-US"
+    comparison_item = data.frame(keyword, 
+                                 geo, 
+                                 time, 
+                                 stringsAsFactors = FALSE
+    )
+    widget = get_widget(comparison_item, 
+                        category, 
+                        gprop
+    )
+    return(widget$request$resolution)
+  }
+
+
+# Sub main fun ------------------------------------------------------------
 
 interest = 
   # 
@@ -104,7 +136,7 @@ interest =
   # Arg:
   #    gprop: only be accepted single value 
   # 
-  function (keyword, geo = "", time = "today+5-y", gprop = c("web", "news", "images", "froogle", "youtube"), category = 0, hl = "en-US") {
+  function (keyword, geo = "US", time = "today+5-y", gprop = c("web", "news", "images", "froogle", "youtube"), category = 0, hl = "en-US") {
     # check whether `gprop` matches any candidates
     gprop = match.arg(gprop, several.ok = FALSE)
     gprop = ifelse(gprop == "web", "", gprop)
@@ -124,6 +156,9 @@ interest =
     interest_over_time = interest_over_time(widget, comparison_item)
     return(interest_over_time)
   }
+
+
+# Main fun ----------------------------------------------------------------
 
 longTermQuery = 
   #
@@ -186,5 +221,5 @@ longTermQuery =
 
 
 
-#
+# test
 df = longTermQuery('2017-01-01 00:00:00', '2017-01-12 01:00:00', keyword = 'zillow')
