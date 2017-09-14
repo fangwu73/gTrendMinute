@@ -125,33 +125,66 @@ interest =
     return(interest_over_time)
   }
 
-interest(keyword = "dog", geo = "US", time = "2017-09-08T0 2017-09-08T4", gprop = c( "news"), category = 0, hl = "en-US")
+longTermQuery = 
+  #
+  # Rolling pull long term minute-level data
+  # 1 minute overlapping
+  #
+  function(start_date, end_date, keyword, geo = 'US', gprop = 'web', category = 0, hl = 'en-US') {
+    require(parallel)
+    # change date format
+    start_date = strptime(
+      start_date,
+      format = "%Y-%m-%d %H:%M:%S", 
+      tz = 'GMT')
+    
+    end_date = strptime(
+      end_date,
+      format = "%Y-%m-%d %H:%M:%S", 
+      tz = 'GMT')
+    
+    # create time stamp sequence
+    diff.time = difftime(end_date, start_date, units = 'hours')
+    if(diff.time < 4) {
+      time.stamp = c(start_date, end_date)
+    } else {
+      time.stamp = seq(start_date, end_date, by = '4 hour') 
+    }
+    
+    # create time pair
+    time.seq = paste(as.Date(time.stamp, 
+                             tz= attributes(time.stamp)$tzone
+                             ), 
+                     lubridate::hour(time.stamp), 
+                     sep='T')
+    time.pair.1 = time.seq[-1]
+    time.pair.2 = time.seq[-length(time.seq)]
+    time.pair = paste(time.pair.2, time.pair.1)
+    
+    # paralle querying data
+    cl = makeCluster(4)
+    clusterExport(cl, varlist = c('interest', 'get_widget', 'interest_over_time'), envir = globalenv())
+    clusterExport(cl, varlist = c('keyword', 'geo', 'gprop', 'category', 'hl'), envir = environment())
+    tmp.list = parLapply(cl, 
+                         time.pair,
+                         function(x) {
+                           interest(keyword = keyword, 
+                                    geo = geo, 
+                                    time = x, 
+                                    gprop = gprop, 
+                                    category = category, 
+                                    hl = hl)
+                         })
+    stopCluster(cl)
+    
+    # make result
+    tmpdf = do.call(rbind, tmp.list)
+    
+    return(tmpdf)
+    
+  }
 
 
-start_date = strptime(
-  '2017-08-12 00:00:00',
-  format = "%Y-%m-%d %H:%M:%S", tz = 'GMT')
-end_date = strptime(
-  '2017-08-13 00:00:00',
-  format = "%Y-%m-%d %H:%M:%S", tz = 'GMT')
-timeStamp = seq(start_date, end_date, by = '4 hour')
 
-timeSeq = paste(as.Date(timeStamp, tz= attributes(timeStamp)$tzone), lubridate::hour(timeStamp), sep='T')
-timePair1 = timeSeq[-1]
-timePair2 = timeSeq[-length(timeSeq)]
-timePair = paste(timePair2, timePair1)
-
-tmpL <- lapply(timePair, function(x) interest(keyword = "zillow", geo = "US", time = x, gprop = c("web", "news", "images", "froogle", "youtube"), category = 0, hl = "en-US"))
-tmpdf <- do.call(rbind, tmpL)
-tmpdf[duplicated(tmpdf$date), ]
-head(tmpdf)
-View(tmpdf)
-
-tmpdf$date = as.character(tmpdf$date)
-tmpdf2 = data.frame(date = as.character(seq(start_date, end_date, by = 'min')))
-
-merge  = tmpdf %>% left_join(tmpdf2, by = 'date')
-merge[!complete.cases(merge), ]
-
-length(unique(tmpdf$date))
-which(table(tmpdf$date)!=1)
+#
+df = longTermQuery('2017-01-01 00:00:00', '2017-01-12 01:00:00', keyword = 'zillow')
