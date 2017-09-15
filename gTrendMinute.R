@@ -207,7 +207,7 @@ longTermQuery =
                                     geo = geo, 
                                     time = x, 
                                     gprop = gprop, 
-                                    category = category, 
+                                    category = category,
                                     hl = hl)
                          })
     stopCluster(cl)
@@ -222,4 +222,4 @@ longTermQuery =
 
 
 # test
-df = longTermQuery('2017-01-01 00:00:00', '2017-01-12 01:00:00', keyword = 'zillow')
+df = longTermQuery('2017-01-01 00:00:00', '2017-01-02 01:00:00', keyword = c('zillow', 'trulia'), geo = c("US","CA"))
