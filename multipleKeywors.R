@@ -5,12 +5,17 @@ library(gtrendsR)
 gtrends
 methods(gtrends)
 getAnywhere(gtrends.default)
-
 function (query = "", geo = "", cat = "0", gprop = c("", "news", 
-                                                     "images", "froogle", "youtube"), session, res = c(NA, "1h", 
-                                                                                                       "4h", "1d", "7d"), start_date = as.Date("2004-01-01"), end_date = as.Date(Sys.time()), 
+                                                     "images", "froogle", "youtube"), session, 
+          res = c(NA, "1h", "4h", "1d", "7d"), 
+          start_date = as.Date("2017-09-01"), end_date = as.Date(Sys.time()), 
           ...) 
 {
+  query = c("a","b")
+  geo = c("US")
+  gprop = "web"
+  res = "1h"
+  
   if (missing(session)) 
     session <- .getDefaultConnection()
   stopifnot(is.character(query), is.vector(query), length(query) <= 
@@ -44,7 +49,8 @@ function (query = "", geo = "", cat = "0", gprop = c("", "news",
   }
   if (!is.na(res)) {
     resolution_code <- data.frame(code = c("1-H", "4-H", 
-                                           "1-d", "7-d"), res = c("1h", "4h", "1d", "7d"), stringsAsFactors = FALSE)
+                                           "1-d", "7-d"), 
+                                  res = c("1h", "4h", "1d", "7d"), stringsAsFactors = FALSE)
     res <- resolution_code$code[resolution_code$res == res]
     date <- paste("now", res)
   }
