@@ -1,9 +1,11 @@
+.pkgenv <- new.env(parent=emptyenv())
+
 # Get Google API cookies handler
 get_api_cookies =
   #
   # get the requisite cookies from Google's API and assign cookie handler to .pkgenv
   #
-  function(cookie_url="http://trends.google.com/Cookies/NID") {
+  function(cookie_url) {
   # create new handler
   cookie_handler <- curl::new_handle()
   # fetch API cookies
@@ -48,7 +50,7 @@ get_widget =
     #url <- encode_keyword(url)
     
     # if cookie_handler hasn't been set up, get the requisite cookies from Google's API
-    if(!exists("cookie_handler", envir = .pkgenv)){ get_api_cookies(cookie_url) }
+    if(!exists("cookie_handler", envir = .pkgenv)){ get_api_cookies(cookie_url="http://trends.google.com/Cookies/NID") }
     # get the tokens etc., using the URL and the cookie_handler
     widget <- curl::curl_fetch_memory(url, 
                                       handle = .pkgenv[["cookie_handler"]])
@@ -199,7 +201,7 @@ long_term_query_raw =
   # with 1 minute overlapping
   # need to adjust due to rescaling issue with Google Trends
   #
-  function(start_date, end_date, keyword, geo = 'US', gprop = 'web', category = 0, hl = 'en-US',tz="America/Los_Angeles") {
+  function(start_date, end_date, keyword, geo = 'US', gprop = 'web', category = 0, hl = 'en-US', tz="America/Los_Angeles") {
     # require(parallel)
     # change date format
     start_date = strptime(
@@ -219,7 +221,7 @@ long_term_query_raw =
     # create time stamp sequence
     diff.time = difftime(end_date_GMT, start_date_GMT, units = 'hours')
     if(diff.time < 4) {
-      time.stamp = seq(start_date_GMT, end_date_GMT, by=diff.time)
+      time.stamp = seq(start_date_GMT, end_date_GMT, by = diff.time)
     } else {
       time.stamp = seq(start_date_GMT, end_date_GMT, by = '4 hour') 
     }
